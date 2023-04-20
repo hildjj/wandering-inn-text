@@ -1,0 +1,25 @@
+{
+  "name": "wanderinginntext",
+  "version": "0.0.0",
+  "description": "Download all of the text from The Wandering Inn",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --ext js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Joe Hildebrand <joe-github@cursive.net>",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "10.0.1",
+    "linkedom": "0.14.25"
+  },
+  "devDependencies": {
+    "@cto.af/eslint-config": "1.0.5",
+    "eslint": "8.38.0",
+    "eslint-plugin-node": "11.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
