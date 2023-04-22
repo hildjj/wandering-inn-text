@@ -22,7 +22,8 @@
     "commander": "10.0.1",
     "linkedom": "0.14.25",
     "turndown": "7.1.2",
-    "turndown-plugin-gfm": "1.0.2"
+    "turndown-plugin-gfm": "1.0.2",
+    "wrap-text": "1.0.9"
   },
   "devDependencies": {
     "@cto.af/eslint-config": "1.0.5",
