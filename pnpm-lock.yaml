@@ -13,6 +13,9 @@ dependencies:
   turndown-plugin-gfm:
     specifier: 1.0.2
     version: 1.0.2
+  wrap-text:
+    specifier: 1.0.9
+    version: 1.0.9
 
 devDependencies:
   '@cto.af/eslint-config':
@@ -1039,6 +1042,10 @@ packages:
       string-width: 4.2.3
       strip-ansi: 6.0.1
     dev: true
+
+  /wrap-text@1.0.9:
+    resolution: {integrity: sha512-NWfjspSgMDXQIMpKM56AwCQPI01OMFRYYJBh6dGNCfH7AOl+j/VqqbiopgJ4VuQfSluqLc+2ekqaPNpYAGZ/Vg==}
+    dev: false
 
   /wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
