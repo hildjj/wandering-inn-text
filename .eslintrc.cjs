@@ -6,4 +6,10 @@ module.exports = {
   ignorePatterns: [
     'node_modules/',
   ],
+  env: {
+    es2022: true,
+  },
+  parserOptions: {
+    ecmaVersion: 13,
+  },
 }

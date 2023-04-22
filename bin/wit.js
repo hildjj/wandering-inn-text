@@ -1,29 +1,22 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs/promises'
-import * as ofs from 'fs'
 import * as path from 'path'
 import {Buffer} from 'buffer'
 import {Command} from 'commander'
+import {HtmlToMarkdown} from '../lib/html.js'
 import diagnostics_channel from 'diagnostics_channel'
 import {fileURLToPath} from 'url'
 import {parseHTML} from 'linkedom'
 import {setTimeout} from 'timers/promises'
-// eslint-disable-next-line node/no-extraneous-import
-import wrap from 'wrap-text'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const html = path.resolve(__dirname, '..', 'html')
 const text = path.resolve(__dirname, '..', 'text')
 
-const {
-  COMMENT_NODE,
-  ELEMENT_NODE,
-  TEXT_NODE,
-} = parseHTML('').Node
-
 const prog = new Command()
+  .option('-f, --force', 'Force processing. May be specified multiple times.  First time forces .md file generation.', (_, prev) => prev + 1, 0)
   .option('-O, --offline', 'Do not try to update existing docs')
   .option('-s, --style', 'Inline style information with {{{style}}}')
   .option('-t, --timeout <ms>', 'Pause between fetches, in milliseconds', 500)
@@ -53,6 +46,15 @@ if (opts.verbose) {
   })
 }
 
+const hm = new HtmlToMarkdown(opts)
+
+const DIRS = new Set()
+async function mkdir(nm) {
+  if (!DIRS.has(nm)) {
+    await fs.mkdir(nm, {recursive: true})
+    DIRS.add(nm)
+  }
+}
 function slug(s) {
   return escape(s.trim().replace(/ /g, '_'))
 }
@@ -72,12 +74,13 @@ async function getHTML(url, filename) {
   if (!file.endsWith('.html')) {
     file = `${file}.html`
   }
-  const dir = `${path.basename(path.dirname(file))}/${path.basename(file)}`
-
+  const dir = `html/${path.basename(path.dirname(file))}/${path.basename(file)}`
+  let mtime = new Date()
   try {
     handle = await fs.open(file, 'r+')
     const stats = await handle.stat()
-    headers['If-Modified-Since'] = stats.mtime.toUTCString()
+    ;({mtime} = stats)
+    headers['If-Modified-Since'] = mtime.toUTCString()
   } catch {
     // Ignored
   }
@@ -93,139 +96,67 @@ async function getHTML(url, filename) {
       log(`Refresh file: "${dir}"\n`)
       await handle.write(resAB)
       await handle.close()
+      mtime = new Date()
     } else {
       log(`New file: "${dir}"\n`)
-      await fs.mkdir(path.dirname(file), {recursive: true})
+      await mkdir(path.dirname(file))
       await fs.writeFile(file, resAB)
     }
     await setTimeout(opts.timeout)
-    return resAB.toString('utf-8')
+    return [resAB.toString('utf-8'), mtime]
   }
   if (r.status === 304) {
     log(`Cache hit, reading: "${dir}"`)
-    const res = handle.readFile('utf8')
+    const res = await handle.readFile('utf8')
     await handle.close()
-    return res
+    return [res, mtime]
   }
   throw new Error(`Unknown HTTP Status code: "${r.status}"`)
 }
 
-function htmlToText(node) {
-  switch (node.nodeType) {
-    case TEXT_NODE:
-      return node.wholeText.replace(/[ \t\r\n]+/g, ' ')
-    case COMMENT_NODE:
-      return `<!--${node.nodeValue}-->`
-    case ELEMENT_NODE:
-      switch (node.tagName) {
-        case 'DIV':
-        case 'P':
-        case 'SPAN': {
-          let prefix = ''
-          const suffix = (node.tagName === 'SPAN') ? '' : '\n'
-          if (opts.style) {
-            if (node.style.length > 0) {
-              prefix = node.style.toString()
-            }
-            if (node.classList.length > 0) {
-              if (prefix) {
-                prefix += ' '
-              }
-              prefix += [...node.classList].join(' ')
-            }
-            if (prefix) {
-              prefix = `{{{${prefix}}}}\n`
-            }
-          }
-          return prefix + node.childNodes.map(htmlToText).join('') + suffix
-        }
-        case 'OL': {
-          let count = 1
-          return node.childNodes.map(child => {
-            if (child.nodeName === 'LI') {
-              return `${count++}. ${htmlToText(child)}`
-            }
-            return htmlToText(child)
-          }).join('')
-        }
-        case 'UL': {
-          return node.childNodes.map(child => {
-            if (child.nodeName === 'LI') {
-              return `- ${htmlToText(child)}`
-            }
-            return htmlToText(child)
-          }).join('')
-        }
-        case 'DL':
-        case 'DT':
-        case 'LI':
-          return `${node.childNodes.map(htmlToText).join('')}\n`
-        case 'EM':
-          return `*${node.innerText}*`
-        case 'B':
-        case 'STRONG':
-          return `**${node.innerText}**`
-        case 'DEL':
-          return `~~${node.innerText}~~`
-        case 'U':
-        case 'SUP':
-        case 'SUB':
-          return `<${node.localName}>${node.innerText}</${node.localName}>`
-        case 'BLOCKQUOTE':
-          return `\`\`\`\n${node.innerText.trim()}\n\`\`\``
-        case 'H1':
-          return `# ${node.innerText.trim()}`
-        case 'H2':
-          return `## ${node.innerText.trim()}`
-        case 'H3':
-          return `### ${node.innerText.trim()}`
-        case 'I':
-          return `/${node.innerText}/`
-        case 'A': {
-          const txt = node.innerText.trim()
-          if (/(?:next|previous)\s+chapter/i.test(txt)) {
-            return ''
-          }
-          return `[${txt}](${node.href})`
-        }
-        case 'BR':
-          return '\n'
-        case 'HR':
-          return '---\n'
-        case 'TIME':
-          return node.innerText
-        case 'AUDIO':
-        case 'IFRAME':
-        case 'IMG':
-        case 'SCRIPT':
-        case 'STYLE':
-          return ''
-        default:
-          throw new Error(`Unknown tag: "${node.tagName}"`)
-      }
-    default:
-      throw new Error(`Unknown nodeType: ${node.nodeType}`)
-  }
-}
-
 async function processChapter(chap, count, title, url) {
   const fn = `${chap}/${(count).toString().padStart(3, 0)}-${slug(title)}`
-  const src = await getHTML(url, fn)
+  const fnt = `${path.join(text, fn)}.md`
+  let handle = undefined
+  let mtime = null
+  try {
+    // Want this to fail on file not found
+    handle = await fs.open(fnt, 'r+')
+    ;({mtime} = await handle.stat())
+  } catch {
+    // Ignored
+  }
+
+  const [src, smtime] = await getHTML(url, fn)
+  if ((opts.force === 0) && mtime && (mtime > smtime)) {
+    log(`Up-to-date: "text/${fn}.md"`)
+    await handle.close()
+    return
+  }
+  if (!handle) {
+    await mkdir(path.join(text, chap))
+    handle = await fs.open(fnt, 'w')
+  }
+
+  log(`Writing: "text/${fn}.md"`)
   const {document} = parseHTML(src)
-  await fs.mkdir(path.join(text, chap), {recursive: true})
-  const out = ofs.createWriteStream(`${path.join(text, fn)}.txt`)
-  out.write(wrap(document.querySelector('.entry-title').innerText))
-  out.write('\n\n')
+
+  await handle.write('# ')
+  await handle.write(hm.md(document.querySelector('.entry-title')))
+  await handle.write('\n\n')
 
   for (const p of document.querySelector('.entry-content').children) {
-    out.write(wrap(htmlToText(p)))
-    out.write('\n')
+    if (p.nodeName === 'FOOTER') {
+      break
+    }
+    await handle.write(hm.md(p))
+    await handle.write('\n\n')
   }
-  out.close()
+  await handle.close()
 }
 
 async function main(argv) {
-  const toc = await getHTML('https://wanderinginn.com/table-of-contents/')
+  const [toc] = (await getHTML('https://wanderinginn.com/table-of-contents/'))
   const {document} = parseHTML(toc)
   const parent = document.querySelector('.entry-content')
   let chap = null

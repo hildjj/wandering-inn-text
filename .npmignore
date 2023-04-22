@@ -3,3 +3,8 @@ html/
 node_modules/
 pnpm-lock.yaml
 .eslintrc.cjs
+coverage/
+.c8rc
+test/
+.editorconfig
+.vscode/

@@ -5,17 +5,28 @@
   "type": "module",
   "scripts": {
     "lint": "eslint . --ext js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "c8 node --test"
   },
-  "keywords": [],
+  "keywords": [
+    "wanderinginn",
+    "wandering",
+    "inn",
+    "pirateaba",
+    "erin",
+    "solstice",
+    "erinsolstice"
+  ],
   "author": "Joe Hildebrand <joe-github@cursive.net>",
   "license": "MIT",
   "dependencies": {
     "commander": "10.0.1",
-    "linkedom": "0.14.25"
+    "linkedom": "0.14.25",
+    "turndown": "7.1.2",
+    "turndown-plugin-gfm": "1.0.2"
   },
   "devDependencies": {
     "@cto.af/eslint-config": "1.0.5",
+    "c8": "7.13.0",
     "eslint": "8.38.0",
     "eslint-plugin-node": "11.1.0"
   },

@@ -1,4 +1,5 @@
-text/
+.vscode/
+coverage/
 html/
 node_modules/
-pnpm-lock.yaml
+text/
