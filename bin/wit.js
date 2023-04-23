@@ -1,26 +1,23 @@
 #!/usr/bin/env node
 
-import * as fs from 'fs/promises'
-import * as path from 'path'
-import {Buffer} from 'buffer'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
+import {Buffer} from 'node:buffer'
 import {Command} from 'commander'
 import {HtmlToMarkdown} from '../lib/html.js'
 import diagnostics_channel from 'diagnostics_channel'
-import {fileURLToPath} from 'url'
 import {parseHTML} from 'linkedom'
 import {setTimeout} from 'timers/promises'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const html = path.resolve(__dirname, '..', 'html')
-const text = path.resolve(__dirname, '..', 'text')
+const html = path.resolve('.', 'html')
+const text = path.resolve('.', 'text')
 
 const prog = new Command()
   .option('-f, --force', 'Force processing. May be specified multiple times.  First time forces .md file generation.', (_, prev) => prev + 1, 0)
   .option('-O, --offline', 'Do not try to update existing docs')
   .option('-s, --style', 'Inline style information with {{{style}}}')
   .option('-t, --timeout <ms>', 'Pause between fetches, in milliseconds', 500)
-  .option('-v, --verbose', 'Enable verbose logging')
+  .option('-v, --verbose', 'Enable verbose logging', (_, prev) => prev + 1, 0)
 
 const opts = prog.parse().opts()
 
@@ -28,22 +25,24 @@ let log = () => {
   // No-op
 }
 
-if (opts.verbose) {
+if (opts.verbose > 0) {
   // eslint-disable-next-line no-console
   log = (...args) => console.log(...args)
 
-  diagnostics_channel.channel('undici:request:create').subscribe(({request}) => {
-    log('origin', request.origin)
-    log('completed', request.completed)
-    log('method', request.method)
-    log('path', request.path)
-    log('headers')
-    log(request
-      .headers
-      .toString()
-      .replace(/^/gm, '  ')
-      .trim())
-  })
+  if (opts.verbose > 1) {
+    diagnostics_channel.channel('undici:request:create').subscribe(({request}) => {
+      log('origin', request.origin)
+      log('completed', request.completed)
+      log('method', request.method)
+      log('path', request.path)
+      log('headers')
+      log(request
+        .headers
+        .toString()
+        .replace(/^/gm, '  ')
+        .trim())
+    })
+  }
 }
 
 const hm = new HtmlToMarkdown(opts)

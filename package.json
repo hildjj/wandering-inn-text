@@ -1,11 +1,14 @@
 {
-  "name": "wanderinginntext",
+  "name": "wandering-inn-text",
   "version": "0.0.0",
   "description": "Download all of the text from The Wandering Inn",
   "type": "module",
   "scripts": {
     "lint": "eslint . --ext js",
     "test": "c8 node --test"
+  },
+  "bin": {
+    "bin/wit.js": "wit"
   },
   "keywords": [
     "wanderinginn",
@@ -19,6 +22,7 @@
   "author": "Joe Hildebrand <joe-github@cursive.net>",
   "license": "MIT",
   "dependencies": {
+    "cli-progress": "3.12.0",
     "commander": "10.0.1",
     "linkedom": "0.14.25",
     "turndown": "7.1.2",
@@ -28,7 +32,7 @@
   "devDependencies": {
     "@cto.af/eslint-config": "1.0.5",
     "c8": "7.13.0",
-    "eslint": "8.38.0",
+    "eslint": "8.39.0",
     "eslint-plugin-node": "11.1.0"
   },
   "engines": {
