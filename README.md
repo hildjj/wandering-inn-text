@@ -36,13 +36,18 @@ chapter.
 Usage: wit [options]
 
 Options:
-  -f, --force         Force processing. May be specified multiple times.  First
-                      time forces .md file generation.
-  -O, --offline       Do not try to update existing docs
-  -s, --style         Inline style information with {{{style}}}
-  -t, --timeout <ms>  Pause between fetches, in milliseconds (default: 500)
-  -v, --verbose       Enable verbose logging
-  -h, --help          display help for command
+  -f, --force             Force processing. May be specified multiple times.
+                          First time forces .md file generation.
+  --html-dir <directory>  Directory in which to save HTML (default: ./html,
+                          env: WIT_HTML)
+  --text-dir <directory>  Directory in which to save markdown (default: ./text,
+                          env: WIT_TEXT)
+  -O, --offline           Do not try to update existing docs
+  -s, --style             Inline style information with {{{style}}}
+  -t, --timeout <ms>      Pause between fetches, in milliseconds (default:
+                          1000)
+  -v, --verbose           Enable verbose logging
+  -h, --help              display help for command
 ```
 
 ## Styles
