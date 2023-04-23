@@ -62,3 +62,6 @@ option.  Markdown doesn't have a good way of showing this information, so the sy
 [Some Fancy Thing Happened]
 ```
 
+---
+[![Tests](https://github.com/hildjj/wandering-inn-text/actions/workflows/node.js.yml/badge.svg)](https://github.com/hildjj/wandering-inn-text/actions/workflows/node.js.yml)
+[![codecov](https://codecov.io/gh/hildjj/wandering-inn-text/branch/main/graph/badge.svg?token=D558VKJMU1)](https://codecov.io/gh/hildjj/wandering-inn-text)
